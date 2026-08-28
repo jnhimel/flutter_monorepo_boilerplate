@@ -31,8 +31,8 @@ Or per-package, from `app/`, `packages/core/`, or `packages/notes/`:
 ```
 flutter analyze
 flutter test                                              # whole package
-flutter test test/cubit/notes_cubit_test.dart              # single file
-flutter test test/cubit/notes_cubit_test.dart --plain-name "some test name"
+flutter test test/features/notes_list/notes_list_cubit_test.dart              # single file
+flutter test test/features/notes_list/notes_list_cubit_test.dart --plain-name "some test name"
 dart run build_runner build --delete-conflicting-outputs
 ```
 
