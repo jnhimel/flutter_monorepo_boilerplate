@@ -1,3 +1,5 @@
+import 'package:injectable/injectable.dart';
+
 /// Crash/error reporting seam. Wire a real Crashlytics/Sentry implementation
 /// of this interface per-project — deliberately not a dependency of this
 /// package so `core` doesn't force a firebase/sentry SDK on every consumer.
@@ -8,6 +10,7 @@ abstract class ErrorReporter {
 /// No-op default so the app runs out of the box. Replace the registration in
 /// `registerCoreDependencies` with a real implementation when wiring
 /// Crashlytics/Sentry.
+@LazySingleton(as: ErrorReporter)
 class NoopErrorReporter implements ErrorReporter {
   @override
   void recordError(Object error, StackTrace stackTrace, {bool fatal = false}) {

@@ -1,29 +1,29 @@
 import 'package:get_it/get_it.dart';
+import 'package:injectable/injectable.dart';
 
 import '../logging/app_logger.dart';
-import '../logging/error_reporter.dart';
 import '../network/dio_client.dart';
 import '../security/security_config.dart';
-import '../storage/database/app_database.dart';
-import '../storage/hive_service.dart';
-import '../storage/preferences_service.dart';
-import '../storage/secure_storage_service.dart';
+import 'service_locator.config.dart';
 
 final GetIt getIt = GetIt.instance;
 
-// ponytail: manual get_it registration; switch to injectable codegen if
-// registration count grows unwieldy across many feature packages.
-
-/// Registers everything `core` owns as lazy singletons. Call once from the
-/// app's `bootstrap()` before `registerNotesDependencies` (or any other
-/// feature package's registration function).
+/// Registers everything `core` owns. Call once from the app's `bootstrap()`
+/// before `registerNotesDependencies` (or any other feature package's
+/// registration function).
+///
+/// Most registrations are generated from `@LazySingleton`/`@module`
+/// annotations across this package (see `core_module.dart`,
+/// `app_logger.dart`, `error_reporter.dart`). `DioClient` stays manual
+/// because it needs a flavor's runtime `baseUrl`/`SecurityConfig`, which
+/// injectable can't see at compile time.
+@InjectableInit()
 Future<void> registerCoreDependencies(
   GetIt getIt, {
   required String baseUrl,
   SecurityConfig securityConfig = const SecurityConfig(),
 }) async {
-  getIt.registerLazySingleton<AppLogger>(ConsoleAppLogger.new);
-  getIt.registerLazySingleton<ErrorReporter>(NoopErrorReporter.new);
+  await getIt.init();
 
   getIt.registerLazySingleton(
     () => DioClient(
@@ -32,15 +32,4 @@ Future<void> registerCoreDependencies(
       securityConfig: securityConfig,
     ),
   );
-
-  getIt.registerLazySingleton(SecureStorageService.new);
-  getIt.registerLazySingleton(AppDatabase.new);
-
-  final prefs = PreferencesService();
-  await prefs.init();
-  getIt.registerSingleton(prefs);
-
-  final hive = HiveService();
-  await hive.init();
-  getIt.registerSingleton(hive);
 }

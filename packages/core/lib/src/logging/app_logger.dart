@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart' as pkg;
 
 /// Thin logging facade so features depend on this interface, not on the
@@ -12,6 +13,7 @@ abstract class AppLogger {
 /// Default console implementation backed by package:logger. Good enough for
 /// dev/local; wire a real backend in via [ErrorReporter] instead of swapping
 /// this out.
+@LazySingleton(as: AppLogger)
 class ConsoleAppLogger implements AppLogger {
   ConsoleAppLogger()
     : _logger = pkg.Logger(printer: pkg.PrettyPrinter(methodCount: 0));
