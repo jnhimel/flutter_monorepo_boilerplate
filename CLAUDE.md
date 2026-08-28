@@ -104,8 +104,8 @@ test/features/<screen>/..., test/data/...     # bloc_test+mocktail against the r
 app-owned and both with `// GENERATOR:` markers `new_feature.sh` edits:
 `app/lib/bootstrap.dart` (calls `register<Feature>Dependencies(getIt)`)
 and `app/lib/router/app_router.dart` (adds a `StatefulShellBranch` to
-the bottom-nav shell). A feature's own cubit is *not* registered in
-DI — it's created per-screen via `BlocProvider` in the view layer.
+the bottom-nav shell). A feature's cubits are registered via `@injectable`
+alongside its repository — see DI below.
 
 **Screen/view split and widget composition:** a screen has two files.
 `<screen>_screen.dart` is thin — it only resolves the screen's cubit from
