@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appTitle": "Boilerplate",
+  "loginTitle": "Log in",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "loginButton": "Log in",
+  "navHome": "Home",
+  "navNotes": "Notes",
+  "navSettings": "Settings"
+}

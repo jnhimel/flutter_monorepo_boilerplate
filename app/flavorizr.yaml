@@ -1,0 +1,28 @@
+app:
+  android:
+    flavorDimensions: "flavor-type"
+
+flavors:
+  dev:
+    app:
+      name: "Boilerplate Dev"
+    android:
+      applicationId: "com.yourcompany.app.dev"
+    ios:
+      bundleId: "com.yourcompany.app.dev"
+
+  staging:
+    app:
+      name: "Boilerplate Staging"
+    android:
+      applicationId: "com.yourcompany.app.staging"
+    ios:
+      bundleId: "com.yourcompany.app.staging"
+
+  prod:
+    app:
+      name: "Boilerplate"
+    android:
+      applicationId: "com.yourcompany.app"
+    ios:
+      bundleId: "com.yourcompany.app"
