@@ -47,36 +47,37 @@ class _NoteDetailViewState
 
   @override
   Widget body(BuildContext context, NoteDetailState state) {
-    return switch (state) {
-      NoteDetailInitial() || NoteDetailLoading() => const AppLoadingIndicator(),
-      NoteDetailError(:final message) => AppErrorView(message: message),
-      NoteDetailLoaded(:final note) => _buildForm(context, note),
-    };
-  }
-
-  Widget _buildForm(BuildContext context, Note note) {
-    _syncControllers(note);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          AppTextField(controller: _titleController, label: 'Title'),
-          const SizedBox(height: 12),
-          AppTextField(controller: _bodyController, label: 'Body'),
-          const SizedBox(height: 16),
-          AppButton(
-            label: 'Save',
-            onPressed: () async {
-              final updated = await cubitOf(
-                context,
-              ).save(title: _titleController.text, body: _bodyController.text);
-              if (updated != null && context.mounted) {
-                Navigator.of(context).pop(updated);
-              }
-            },
+    switch (state) {
+      case NoteDetailInitial():
+      case NoteDetailLoading():
+        return const AppLoadingIndicator();
+      case NoteDetailError(:final message):
+        return AppErrorView(message: message);
+      case NoteDetailLoaded(:final note):
+        _syncControllers(note);
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              AppTextField(controller: _titleController, label: 'Title'),
+              const SizedBox(height: 12),
+              AppTextField(controller: _bodyController, label: 'Body'),
+              const SizedBox(height: 16),
+              AppButton(
+                label: 'Save',
+                onPressed: () async {
+                  final updated = await cubitOf(context).save(
+                    title: _titleController.text,
+                    body: _bodyController.text,
+                  );
+                  if (updated != null && context.mounted) {
+                    Navigator.of(context).pop(updated);
+                  }
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+    }
   }
 }
