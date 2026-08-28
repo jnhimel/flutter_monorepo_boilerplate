@@ -1596,6 +1596,27 @@ void main() {
         ),
       ],
     );
+
+    blocTest<NoteDetailCubit, NoteDetailState>(
+      'save emits an error state when the repository reports a failure',
+      build: () {
+        when(
+          () => repository.getNoteById(1),
+        ).thenAnswer((_) async => Success(note));
+        when(() => repository.updateNote(any())).thenAnswer(
+          (_) async => const Failure(StorageFailure()),
+        );
+        return NoteDetailCubit(1, repository);
+      },
+      act: (cubit) => cubit
+          .load()
+          .then((_) => cubit.save(title: 'Updated', body: 'New body')),
+      expect: () => [
+        const NoteDetailState.loading(),
+        NoteDetailState.loaded(note),
+        isA<NoteDetailError>(),
+      ],
+    );
   });
 }
 ```
@@ -1658,18 +1679,31 @@ class NoteDetailCubit extends BaseCubit<NoteDetailState> {
 
   /// Returns the updated note on success, so the screen can pop with a
   /// result the notes-list screen uses to know it should refresh.
+  ///
+  /// Can't route this through `runGuarded` (it needs to return `Note?`,
+  /// and `runGuarded`'s `action` is `Future<void> Function()`) — so it
+  /// wraps the repository call in the same try/catch + `safeEmit` shape
+  /// `runGuarded` uses internally, for the same reason `load()` uses
+  /// `runGuarded`: `NoteDetailCubit` is written against the `NotesRepository`
+  /// interface, which is documented as never throwing, but an unguarded
+  /// call here would still crash if some future implementation did.
   Future<Note?> save({required String title, required String body}) async {
     final current = state;
     if (current is! NoteDetailLoaded) return null;
     final updated = current.note.copyWith(title: title, body: body);
-    final result = await _repository.updateNote(updated);
-    switch (result) {
-      case Success():
-        safeEmit(NoteDetailState.loaded(updated));
-        return updated;
-      case Failure(:final failure):
-        safeEmit(NoteDetailState.error(failure.message));
-        return null;
+    try {
+      final result = await _repository.updateNote(updated);
+      switch (result) {
+        case Success():
+          safeEmit(NoteDetailState.loaded(updated));
+          return updated;
+        case Failure(:final failure):
+          safeEmit(NoteDetailState.error(failure.message));
+          return null;
+      }
+    } on Object catch (error, stackTrace) {
+      safeEmit(NoteDetailState.error(error.toString()));
+      return null;
     }
   }
 }
