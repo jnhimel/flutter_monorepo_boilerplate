@@ -2,6 +2,7 @@
 /// storage services, DI, routing base, logging, and security stubs.
 library;
 
+export 'src/base/base_cubit.dart';
 export 'src/di/service_locator.dart';
 export 'src/error/app_failure.dart';
 export 'src/error/result.dart';
