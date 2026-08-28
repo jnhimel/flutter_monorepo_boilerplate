@@ -5,23 +5,36 @@ import 'package:flutter/material.dart';
 /// on its own. Takes [onSave] instead of a cubit so it doesn't need a
 /// `BlocProvider` in scope — `showDialog` opens on the root navigator, which
 /// sits above this screen's `BlocProvider<NotesListCubit>`.
-class AddNoteDialog extends StatelessWidget {
+class AddNoteDialog extends StatefulWidget {
   const AddNoteDialog({super.key, required this.onSave});
 
   final void Function({required String title, required String body}) onSave;
 
   @override
+  State<AddNoteDialog> createState() => _AddNoteDialogState();
+}
+
+class _AddNoteDialogState extends State<AddNoteDialog> {
+  final _titleController = TextEditingController();
+  final _bodyController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final titleController = TextEditingController();
-    final bodyController = TextEditingController();
     return AlertDialog(
       title: const Text('New note'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppTextField(controller: titleController, label: 'Title'),
+          AppTextField(controller: _titleController, label: 'Title'),
           const SizedBox(height: 8),
-          AppTextField(controller: bodyController, label: 'Body'),
+          AppTextField(controller: _bodyController, label: 'Body'),
         ],
       ),
       actions: [
@@ -32,8 +45,11 @@ class AddNoteDialog extends StatelessWidget {
         AppButton(
           label: 'Save',
           onPressed: () {
-            if (titleController.text.trim().isEmpty) return;
-            onSave(title: titleController.text, body: bodyController.text);
+            if (_titleController.text.trim().isEmpty) return;
+            widget.onSave(
+              title: _titleController.text,
+              body: _bodyController.text,
+            );
             Navigator.of(context).pop();
           },
         ),

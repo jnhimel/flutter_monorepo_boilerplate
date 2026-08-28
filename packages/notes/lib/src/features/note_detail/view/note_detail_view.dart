@@ -17,6 +17,11 @@ class _NoteDetailViewState
   late TextEditingController _titleController;
   late TextEditingController _bodyController;
   int? _loadedNoteId;
+  // Guards dispose(): the controllers above are only assigned once the
+  // cubit reaches `NoteDetailLoaded` (see `_syncControllers`), so a screen
+  // popped while still `initial`/`loading`/`error` would otherwise dispose
+  // never-initialized `late` fields and throw.
+  bool _controllersInitialized = false;
 
   // ponytail: `onStateChanged` (BlocConsumer's listener) only fires for
   // state *transitions* — flutter_bloc's `_BlocBuilderBaseState.initState`
@@ -34,11 +39,21 @@ class _NoteDetailViewState
     _loadedNoteId = note.id;
     _titleController = TextEditingController(text: note.title);
     _bodyController = TextEditingController(text: note.body);
+    _controllersInitialized = true;
   }
 
   @override
   void onStateChanged(BuildContext context, NoteDetailState state) {
     if (state is NoteDetailLoaded) _syncControllers(state.note);
+  }
+
+  @override
+  void dispose() {
+    if (_controllersInitialized) {
+      _titleController.dispose();
+      _bodyController.dispose();
+    }
+    super.dispose();
   }
 
   @override

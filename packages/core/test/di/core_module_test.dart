@@ -22,9 +22,12 @@ void main() {
     expect(module.secureStorageService, isA<SecureStorageService>());
   });
 
-  test('preferencesService initializes SharedPreferences before returning', () async {
-    SharedPreferences.setMockInitialValues({});
-    final service = await module.preferencesService;
-    expect(service.getBool('missing_key'), isFalse);
-  });
+  test(
+    'preferencesService initializes SharedPreferences before returning',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final service = await module.preferencesService;
+      expect(service.getBool('missing_key'), isFalse);
+    },
+  );
 }

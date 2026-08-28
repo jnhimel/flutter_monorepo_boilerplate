@@ -23,7 +23,7 @@ dart pub get                      # from repo root: resolves + links every works
 tool/workspace.sh analyze         # flutter analyze in every package
 tool/workspace.sh format          # dart format --set-exit-if-changed everywhere
 tool/workspace.sh test            # flutter test in every package with a test/ dir
-tool/workspace.sh build_runner    # freezed/json_serializable/drift codegen where needed
+tool/workspace.sh build_runner    # freezed/json_serializable/drift/injectable codegen where needed
 ```
 
 Or per-package, from `app/`, `packages/core/`, or `packages/notes/`:
@@ -36,7 +36,7 @@ flutter test test/features/notes_list/notes_list_cubit_test.dart --plain-name "s
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Generated files (`*.freezed.dart`, `*.g.dart`, l10n output) are
+Generated files (`*.freezed.dart`, `*.g.dart`, `*.config.dart`, l10n output) are
 gitignored — never hand-edit them; re-run `build_runner`/`gen-l10n`.
 
 Run a flavor from `app/`:
@@ -109,12 +109,12 @@ alongside its repository — see DI below.
 
 **Screen/view split and widget composition:** a screen has two files.
 `<screen>_screen.dart` is thin — it only resolves the screen's cubit from
-`getIt` and wraps it in a `BlocProvider`; it's the `GoRoute`/`ShellRoute`
-builder target. `<screen>_view.dart` holds the actual UI — `extends
-BaseView<Cubit, State>` (or `BaseViewState` for a screen needing
-`initState`/local controllers, from `core`'s `base/` — overrides `appBar()`
-and `body()`; `BaseViewMixin` owns the `BlocConsumer -> Scaffold -> SafeArea`
-shell so no screen hand-rolls it. No private `Widget _buildX()` helper
+`getIt` and wraps it in a `BlocProvider`; it's the `GoRoute` builder target.
+`<screen>_view.dart` holds the actual UI — `extends BaseView<Cubit, State>`
+(or `BaseViewState` for a screen needing `initState`/local controllers, both
+from `core`'s `base/`) — overrides `appBar()` and `body()`; `BaseViewMixin`
+owns the `BlocConsumer -> Scaffold -> SafeArea` shell so no screen hand-rolls
+it. No private `Widget _buildX()` helper
 methods: inline a sub-widget in `body()` if it's used once; if it's reused,
 non-trivial, or needed to keep `body()` readable, extract it as a public
 `Widget` class into its own file under that screen's `view/widgets/`
