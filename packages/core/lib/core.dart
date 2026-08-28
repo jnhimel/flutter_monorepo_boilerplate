@@ -3,6 +3,8 @@
 library;
 
 export 'src/di/service_locator.dart';
+export 'src/error/app_failure.dart';
+export 'src/error/result.dart';
 export 'src/logging/app_logger.dart';
 export 'src/logging/error_reporter.dart';
 export 'src/network/app_exception.dart';
