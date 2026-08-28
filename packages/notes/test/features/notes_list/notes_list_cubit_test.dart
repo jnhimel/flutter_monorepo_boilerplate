@@ -83,5 +83,40 @@ void main() {
         const NotesListState.loaded([]),
       ],
     );
+
+    blocTest<NotesListCubit, NotesListState>(
+      'addNote emits an error state when the repository reports a failure',
+      build: () {
+        when(() => repository.getNotes())
+            .thenAnswer((_) async => const Success([]));
+        when(() => repository.addNote(title: 'New', body: 'Body'))
+            .thenAnswer((_) async => const Failure(StorageFailure()));
+        return NotesListCubit(repository);
+      },
+      act: (cubit) =>
+          cubit.load().then((_) => cubit.addNote(title: 'New', body: 'Body')),
+      expect: () => [
+        const NotesListState.loading(),
+        const NotesListState.loaded([]),
+        isA<NotesListError>(),
+      ],
+    );
+
+    blocTest<NotesListCubit, NotesListState>(
+      'deleteNote emits an error state when the repository reports a failure',
+      build: () {
+        when(() => repository.getNotes())
+            .thenAnswer((_) async => Success([note]));
+        when(() => repository.deleteNote(1))
+            .thenAnswer((_) async => const Failure(StorageFailure()));
+        return NotesListCubit(repository);
+      },
+      act: (cubit) => cubit.load().then((_) => cubit.deleteNote(1)),
+      expect: () => [
+        const NotesListState.loading(),
+        NotesListState.loaded([note]),
+        isA<NotesListError>(),
+      ],
+    );
   });
 }

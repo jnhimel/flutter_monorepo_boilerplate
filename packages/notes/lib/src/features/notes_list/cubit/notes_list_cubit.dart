@@ -30,26 +30,30 @@ class NotesListCubit extends BaseCubit<NotesListState> {
   }
 
   Future<void> addNote({required String title, required String body}) async {
-    final result = await _repository.addNote(title: title, body: body);
-    switch (result) {
-      case Success(:final value):
-        safeEmit(NotesListState.loaded([..._currentNotes, value]));
-      case Failure(:final failure):
-        safeEmit(NotesListState.error(failure.message));
-    }
+    await runGuarded(() async {
+      final result = await _repository.addNote(title: title, body: body);
+      switch (result) {
+        case Success(:final value):
+          safeEmit(NotesListState.loaded([..._currentNotes, value]));
+        case Failure(:final failure):
+          safeEmit(NotesListState.error(failure.message));
+      }
+    }, onError: (error, stackTrace) => NotesListState.error(error.toString()));
   }
 
   Future<void> deleteNote(int id) async {
-    final result = await _repository.deleteNote(id);
-    switch (result) {
-      case Success():
-        safeEmit(
-          NotesListState.loaded(
-            _currentNotes.where((n) => n.id != id).toList(),
-          ),
-        );
-      case Failure(:final failure):
-        safeEmit(NotesListState.error(failure.message));
-    }
+    await runGuarded(() async {
+      final result = await _repository.deleteNote(id);
+      switch (result) {
+        case Success():
+          safeEmit(
+            NotesListState.loaded(
+              _currentNotes.where((n) => n.id != id).toList(),
+            ),
+          );
+        case Failure(:final failure):
+          safeEmit(NotesListState.error(failure.message));
+      }
+    }, onError: (error, stackTrace) => NotesListState.error(error.toString()));
   }
 }
