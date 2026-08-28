@@ -48,7 +48,7 @@ GoRouter buildAppRouter(GetIt getIt) {
               ),
             ],
           ),
-          notesShellBranch(getIt),
+          notesShellBranch(),
           StatefulShellBranch(
             routes: [
               GoRoute(

@@ -50,7 +50,7 @@ class NoteDetailCubit extends BaseCubit<NoteDetailState> {
           safeEmit(NoteDetailState.error(failure.message));
           return null;
       }
-    } on Object catch (error, stackTrace) {
+    } on Object catch (error) {
       safeEmit(NoteDetailState.error(error.toString()));
       return null;
     }
