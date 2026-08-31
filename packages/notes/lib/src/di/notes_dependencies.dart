@@ -1,17 +1,11 @@
-import 'package:core/core.dart';
 import 'package:get_it/get_it.dart';
+import 'package:injectable/injectable.dart';
 
-import '../repository/notes_repository.dart';
-import '../repository/notes_repository_impl.dart';
+import 'notes_dependencies.config.dart';
 
-// ponytail: manual get_it registration, matching core's pattern — see
-// core's service_locator.dart for the rationale.
-
-/// Registers this feature's dependencies. `NotesCubit` is deliberately NOT
-/// registered here — it's created per-screen via `BlocProvider` in the view
-/// layer instead.
-void registerNotesDependencies(GetIt getIt) {
-  getIt.registerLazySingleton<NotesRepository>(
-    () => NotesRepositoryImpl(getIt<AppDatabase>()),
-  );
-}
+/// Generated init, covers every `@injectable`/`@LazySingleton` registration
+/// in this package (the repository, the datasource, and both feature
+/// cubits). `NoteDetailCubit` is a `@factoryParam` factory — resolve it with
+/// `getIt<NoteDetailCubit>(param1: noteId)`.
+@InjectableInit()
+void registerNotesDependencies(GetIt getIt) => getIt.init();

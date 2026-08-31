@@ -23,7 +23,7 @@ dart pub get                      # from repo root: resolves + links every works
 tool/workspace.sh analyze         # flutter analyze in every package
 tool/workspace.sh format          # dart format --set-exit-if-changed everywhere
 tool/workspace.sh test            # flutter test in every package with a test/ dir
-tool/workspace.sh build_runner    # freezed/json_serializable/drift codegen where needed
+tool/workspace.sh build_runner    # freezed/json_serializable/drift/injectable codegen where needed
 ```
 
 Or per-package, from `app/`, `packages/core/`, or `packages/notes/`:
@@ -31,12 +31,12 @@ Or per-package, from `app/`, `packages/core/`, or `packages/notes/`:
 ```
 flutter analyze
 flutter test                                              # whole package
-flutter test test/cubit/notes_cubit_test.dart              # single file
-flutter test test/cubit/notes_cubit_test.dart --plain-name "some test name"
+flutter test test/features/notes_list/notes_list_cubit_test.dart              # single file
+flutter test test/features/notes_list/notes_list_cubit_test.dart --plain-name "some test name"
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Generated files (`*.freezed.dart`, `*.g.dart`, l10n output) are
+Generated files (`*.freezed.dart`, `*.g.dart`, `*.config.dart`, l10n output) are
 gitignored — never hand-edit them; re-run `build_runner`/`gen-l10n`.
 
 Run a flavor from `app/`:
@@ -75,28 +75,62 @@ depends on a feature package.
 don't build from scratch):
 
 ```
-lib/<feature>.dart                            # barrel export = public API
-lib/src/entity/<thing>.dart                   # freezed + json_serializable model
-lib/src/repository/<feature>_repository.dart       # abstract interface — cubits are tested against this
-lib/src/repository/<feature>_repository_impl.dart  # real impl, backed by core's AppDatabase (Drift)
-lib/src/cubit/<feature>_cubit.dart / _state.dart    # freezed sealed states
-lib/src/di/<feature>_dependencies.dart        # register<Feature>Dependencies(GetIt)
+lib/<feature>.dart                                    # barrel export = public API
+lib/src/domain/entity/<thing>.dart                   # freezed + json_serializable model
+lib/src/domain/repository/<feature>_repository.dart   # interface — returns Result<T, AppFailure>
+lib/src/data/datasource/<feature>_local_data_source.dart  # wraps core's AppDatabase/Hive/etc. — the
+                                                           # only file touching that storage directly
+lib/src/data/repository_impl/<feature>_repository_impl.dart  # implements the domain repository,
+                                                               # delegates to the datasource
+lib/src/features/<screen>/cubit/<screen>_cubit.dart / _state.dart  # one cubit per screen — no
+                                                                    # cross-screen shared cubit;
+                                                                    # a screen needing another
+                                                                    # screen's data goes through the
+                                                                    # repository, not a shared cubit
+lib/src/features/<screen>/view/<screen>_screen.dart   # resolves this screen's cubit from `getIt`
+                                                       # (getIt<Cubit>() or getIt<Cubit>(param1: x)
+                                                       # for one needing a route param) and wraps it
+                                                       # in a BlocProvider — the GoRoute target
+lib/src/features/<screen>/view/<screen>_view.dart     # pure UI, extends core's BaseView/BaseViewState
+lib/src/features/<screen>/view/widgets/*.dart         # sub-widgets extracted out of that screen's
+                                                       # body() — see the widget-composition rule below
+lib/src/di/<feature>_dependencies.dart        # @InjectableInit() entry point (see DI below)
 lib/src/routing/<feature>_routes.dart         # this feature's StatefulShellBranch/GoRoute list
-lib/src/view/*.dart
-test/cubit/..., test/view/...                 # bloc_test+mocktail against the repository interface, widget test with mocked cubit
+test/features/<screen>/..., test/data/...     # bloc_test+mocktail against the repository interface,
+                                               # widget test with a mocked cubit
 ```
 
 **Wiring a feature into the app** happens in exactly two places, both
 app-owned and both with `// GENERATOR:` markers `new_feature.sh` edits:
 `app/lib/bootstrap.dart` (calls `register<Feature>Dependencies(getIt)`)
 and `app/lib/router/app_router.dart` (adds a `StatefulShellBranch` to
-the bottom-nav shell). A feature's own cubit is *not* registered in
-DI — it's created per-screen via `BlocProvider` in the view layer.
+the bottom-nav shell). A feature's cubits are registered via `@injectable`
+alongside its repository — see DI below.
 
-**DI:** plain `get_it` registration functions per package (`core`'s
-`registerCoreDependencies`, each feature's `register<Feature>Dependencies`),
-not `injectable` codegen. `getIt` is `core`'s single global
-`GetIt.instance`.
+**Screen/view split and widget composition:** a screen has two files.
+`<screen>_screen.dart` is thin — it only resolves the screen's cubit from
+`getIt` and wraps it in a `BlocProvider`; it's the `GoRoute` builder target.
+`<screen>_view.dart` holds the actual UI — `extends BaseView<Cubit, State>`
+(or `BaseViewState` for a screen needing `initState`/local controllers, both
+from `core`'s `base/`) — overrides `appBar()` and `body()`; `BaseViewMixin`
+owns the `BlocConsumer -> Scaffold -> SafeArea` shell so no screen hand-rolls
+it. No private `Widget _buildX()` helper
+methods: inline a sub-widget in `body()` if it's used once; if it's reused,
+non-trivial, or needed to keep `body()` readable, extract it as a public
+`Widget` class into its own file under that screen's `view/widgets/`
+folder.
+
+**DI:** `get_it` + `injectable` codegen. Repositories, datasources, and
+core services carry `@LazySingleton(as: ...)`/`@lazySingleton`/`@injectable`
+annotations (or an `@module` provider in `core_module.dart` for a class
+injectable can't construct directly — an optional test-only constructor
+param, or an async `init()` step); each package's `di/<feature>_dependencies.dart`
+carries a single `@InjectableInit()` entry point that the generated
+`getIt.init()` implements. `getIt` is `core`'s single global `GetIt.instance`.
+Cubits are `@injectable` too — a cubit needing a route parameter (e.g.
+`NoteDetailCubit`'s `noteId`) takes it via `@factoryParam`; screens resolve
+with `getIt<Cubit>()` or `getIt<Cubit>(param1: ...)` rather than
+constructing the cubit and its dependencies by hand.
 
 **Routing:** one `go_router` instance (`buildAppRouter`, built in
 `bootstrap.dart` after DI is wired) with a `redirect` driven by

@@ -4,35 +4,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:notes/notes.dart';
+import 'package:notes/src/domain/entity/note.dart';
+import 'package:notes/src/features/notes_list/cubit/notes_list_cubit.dart';
+import 'package:notes/src/features/notes_list/cubit/notes_list_state.dart';
+import 'package:notes/src/features/notes_list/view/notes_list_view.dart';
 
-class MockNotesRepository extends Mock implements NotesRepository {}
-
-class MockNotesCubit extends MockCubit<NotesState> implements NotesCubit {}
+class MockNotesListCubit extends MockCubit<NotesListState>
+    implements NotesListCubit {}
 
 void main() {
-  late MockNotesCubit cubit;
+  late MockNotesListCubit cubit;
 
   Widget wrap() => MaterialApp(
     theme: AppTheme.light,
-    home: BlocProvider<NotesCubit>.value(
+    home: BlocProvider<NotesListCubit>.value(
       value: cubit,
-      child: const NotesListPage(),
+      child: const NotesListView(),
     ),
   );
 
   setUp(() {
-    cubit = MockNotesCubit();
+    cubit = MockNotesListCubit();
   });
 
   testWidgets('shows a loading indicator while loading', (tester) async {
-    when(() => cubit.state).thenReturn(const NotesState.loading());
+    when(() => cubit.state).thenReturn(const NotesListState.loading());
     await tester.pumpWidget(wrap());
     expect(find.byType(AppLoadingIndicator), findsOneWidget);
   });
 
   testWidgets('shows an empty state when loaded with no notes', (tester) async {
-    when(() => cubit.state).thenReturn(const NotesState.loaded([]));
+    when(() => cubit.state).thenReturn(const NotesListState.loaded([]));
     await tester.pumpWidget(wrap());
     expect(find.byType(AppEmptyState), findsOneWidget);
   });
@@ -44,7 +46,7 @@ void main() {
       body: 'Milk, eggs',
       createdAt: DateTime(2026, 1, 1),
     );
-    when(() => cubit.state).thenReturn(NotesState.loaded([note]));
+    when(() => cubit.state).thenReturn(NotesListState.loaded([note]));
     await tester.pumpWidget(wrap());
     expect(find.text('Groceries'), findsOneWidget);
     expect(find.text('Milk, eggs'), findsOneWidget);

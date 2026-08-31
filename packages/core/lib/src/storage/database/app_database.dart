@@ -44,4 +44,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteNote(int id) =>
       (delete(notes)..where((t) => t.id.equals(id))).go();
+
+  Future<Note?> getNoteById(int id) =>
+      (select(notes)..where((t) => t.id.equals(id))).getSingleOrNull();
 }

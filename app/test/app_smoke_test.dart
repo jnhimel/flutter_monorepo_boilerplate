@@ -23,16 +23,26 @@ class _FakeSecureStorageService extends SecureStorageService {
   Future<void> delete(String key) async {}
 }
 
+// Kept as a compile-time check that this fake still implements
+// NotesRepository correctly; nothing in this test actually resolves it via
+// DI.
 class _FakeNotesRepository implements NotesRepository {
   @override
-  Future<List<Note>> getNotes() async => [];
+  Future<Result<List<Note>, AppFailure>> getNotes() async => const Success([]);
   @override
-  Future<Note> addNote({required String title, required String body}) =>
-      throw UnimplementedError();
+  Future<Result<Note, AppFailure>> getNoteById(int id) async =>
+      const Failure(StorageFailure('Note not found.'));
   @override
-  Future<void> updateNote(Note note) async {}
+  Future<Result<Note, AppFailure>> addNote({
+    required String title,
+    required String body,
+  }) => throw UnimplementedError();
   @override
-  Future<void> deleteNote(int id) async {}
+  Future<Result<void, AppFailure>> updateNote(Note note) async =>
+      const Success(null);
+  @override
+  Future<Result<void, AppFailure>> deleteNote(int id) async =>
+      const Success(null);
 }
 
 void main() {

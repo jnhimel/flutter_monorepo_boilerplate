@@ -43,7 +43,8 @@ fi
 echo "Scaffolding packages/$PLURAL_LOWER from packages/notes ..."
 rsync -a --exclude='.dart_tool' --exclude='build' --exclude='pubspec.lock' \
   --exclude='pubspec_overrides.yaml' --exclude='.DS_Store' --exclude='*.iml' \
-  --exclude='*.g.dart' --exclude='*.freezed.dart' "$SRC/" "$DEST/"
+  --exclude='*.g.dart' --exclude='*.freezed.dart' --exclude='*.config.dart' \
+  "$SRC/" "$DEST/"
 
 # Substitute names in file contents. Order matters: the plural forms must be
 # rewritten before the singular ones, or "Notes"/"notes" would partially
@@ -124,9 +125,9 @@ ROUTER="$ROOT_DIR/app/lib/router/app_router.dart"
 ROUTE_MARKER="// GENERATOR: register feature routes above this line"
 if grep -qF "$ROUTE_MARKER" "$ROUTER"; then
   insert_import "$ROUTER" "import 'package:${PLURAL_LOWER}/${PLURAL_LOWER}.dart';"
-  insert_before_marker "$ROUTER" "$ROUTE_MARKER" "${PLURAL_LOWER}ShellBranch(getIt),"
-  if grep -qF "${PLURAL_LOWER}ShellBranch(getIt)," "$ROUTER"; then
-    echo "Wired ${PLURAL_LOWER}ShellBranch(getIt) into app/lib/router/app_router.dart"
+  insert_before_marker "$ROUTER" "$ROUTE_MARKER" "${PLURAL_LOWER}ShellBranch(),"
+  if grep -qF "${PLURAL_LOWER}ShellBranch()," "$ROUTER"; then
+    echo "Wired ${PLURAL_LOWER}ShellBranch() into app/lib/router/app_router.dart"
   else
     echo "WARNING: failed to insert route branch — wire it by hand in $ROUTER" >&2
   fi
@@ -145,7 +146,7 @@ these — it still points at notes' table/route constant in packages/core):
          path: ../packages/$PLURAL_LOWER
   2. Add a "$PLURAL_LOWER" table + DAO methods to packages/core's AppDatabase
      (Notes/watchAllNotes/createNote/etc. were copied by name, not
-     regenerated — packages/$PLURAL_LOWER/lib/src/repository/${PLURAL_LOWER}_repository_impl.dart
+     regenerated — packages/$PLURAL_LOWER/lib/src/data/datasource/${PLURAL_LOWER}_local_data_source.dart
      still calls the notes ones).
   3. Add 'static const $PLURAL_LOWER = "/$PLURAL_LOWER";' to
      packages/core/lib/src/routing/app_route_paths.dart, and a bottom-nav
